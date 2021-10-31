@@ -98,7 +98,7 @@ public:
                   std::map<uint32, sqRead *>  *reads_ = NULL,
                   AlnGraphBoost               *ag_);
 /// Added by Kijin Kim
-  void   saveGraphToStream(FILE *F);
+  void   saveGraphToStream(FILE* F, char* Fname);
 
 private:
   void   switchToUncompressedCoordinates(void);

@@ -189,7 +189,7 @@ public:
 
     /// Added by Kijin Kim
     /// Export the graph with boost/graph/adjacency_list_io.hpp
-    void printGraph(FILE *F);
+    void printGraph(char* Fname);
 
     /// Destructor.
     virtual ~AlnGraphBoost();
