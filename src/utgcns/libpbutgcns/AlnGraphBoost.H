@@ -56,6 +56,7 @@
 
 #include <boost/graph/adjacency_list.hpp>
 #include <stdint.h>
+#include "Alignment.H"
 #include "files.H"
 
 /// Alignment graph representation and consensus caller.  Based on the original
@@ -144,6 +145,9 @@ public:
     /// information is filled in as alignments are added.
     /// \param blen length of the reference sequence.
     AlnGraphBoost(const size_t blen);
+
+    // Move constructor.
+    AlnGraphBoost(AlnGraphBoost&& other) noexcept;
 
     /// Add alignment to the graph.
     /// \param Alignment an alignment record (see Alignment.hpp)
