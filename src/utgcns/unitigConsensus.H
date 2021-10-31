@@ -95,8 +95,7 @@ public:
   bool   generate(tgTig                       *tig_,
                   char                         algorithm_,
                   char                         aligner_,
-                  std::map<uint32, sqRead *>  *reads_ = NULL,
-                  AlnGraphBoost               *ag_ = NULL);
+                  std::map<uint32, sqRead *>  *reads_ = NULL);
 /// Added by Kijin Kim
   void   saveGraphToStream(FILE* F, char* Fname);
 
@@ -112,8 +111,7 @@ private:
 
   bool   generatePBDAG(tgTig                                *tig,
                        char                                 aligner,
-                       std::map<uint32, sqRead *>           *reads = NULL,
-                       AlnGraphBoost                        *ag = NULL);
+                       std::map<uint32, sqRead *>           *reads = NULL);
 
   bool   generateQuick(tgTig                       *tig,
                        std::map<uint32, sqRead *>  *reads = NULL);

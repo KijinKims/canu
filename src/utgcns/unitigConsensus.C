@@ -834,8 +834,7 @@ unitigConsensus::initializeGenerate(tgTig                       *tig_,
 bool
 unitigConsensus::generatePBDAG(tgTig                       *tig_,
                                char                         aligner_,
-                               std::map<uint32, sqRead *>  *reads_,
-                               AlnGraphBoost               *ag_) {
+                               std::map<uint32, sqRead *>  *reads_) {
 
   if (initializeGenerate(tig_, reads_) == false)
     return(false);
@@ -891,7 +890,7 @@ unitigConsensus::generatePBDAG(tgTig                       *tig_,
   if (showAlgorithm())
     fprintf(stderr, "Constructing graph\n");
 
-  AlnGraphBoost ag(std::string(tigseq, tiglen));
+  AlnGraphBoost* ag = new AlnGraphBoost(std::string(tigseq, tiglen));
 
   for (uint32 ii=0; ii<_numReads; ii++) {
     _cnspos[ii].setMinMax(aligns[ii].start, aligns[ii].end);
@@ -900,7 +899,7 @@ unitigConsensus::generatePBDAG(tgTig                       *tig_,
         (aligns[ii].end   == 0))
       continue;
 
-    ag.addAln(aligns[ii]);
+    ag->addAln(aligns[ii]);
 
     aligns[ii].clear();
   }
@@ -911,13 +910,13 @@ unitigConsensus::generatePBDAG(tgTig                       *tig_,
     fprintf(stderr, "Merging graph\n");
 
   //  Merge the nodes and call consensus
-  ag.mergeNodes();
+  ag->mergeNodes();
 
   if (showAlgorithm())
     fprintf(stderr, "Calling consensus\n");
 
   //FIXME why do we have 0weight nodes (template seq w/o support even from the read that generated them)?
-  std::string cns = ag.consensus(0);
+  std::string cns = ag->consensus(0);
 
   delete [] tigseq;
 
@@ -939,7 +938,7 @@ unitigConsensus::generatePBDAG(tgTig                       *tig_,
   _tig->_basesLen   = len;
   _tig->_layoutLen  = len;
 
-  ag_ = &ag;
+  _ag = ag;
 
   assert(len < _tig->_basesMax);
 
@@ -1502,8 +1501,7 @@ bool
 unitigConsensus::generate(tgTig                       *tig_,
                           char                         algorithm_,
                           char                         aligner_,
-                          std::map<uint32, sqRead *>  *reads_,
-                          AlnGraphBoost               *ag_) {
+                          std::map<uint32, sqRead *>  *reads_) {
   bool  success = false;
 
   if      (tig_->numberOfChildren() == 1) {
@@ -1516,7 +1514,7 @@ unitigConsensus::generate(tgTig                       *tig_,
 
   else if ((algorithm_ == 'P') ||   //  Normal utgcns.
            (algorithm_ == 'p')) {   //  'norealign'
-    success = generatePBDAG(tig_, aligner_, reads_, ag_);
+    success = generatePBDAG(tig_, aligner_, reads_);
   }
 
   if (success) {
@@ -1538,5 +1536,5 @@ unitigConsensus::generate(tgTig                       *tig_,
 void
 unitigConsensus::saveGraphToStream(FILE* F, char* Fname) {
   writeToFile(std::to_string(_tig->tigID()), "unitigConsensus::saveGraphToStream::tigID", F);
-  _ag->printGraph(Fname);
+  ag->printGraph(Fname);
 }
