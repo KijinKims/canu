@@ -542,8 +542,10 @@ void AlnGraphBoost::printGraph(char* Fname) {
     std::ofstream outfile (Fname);
 
     if (outfile.is_open()) {
-        outfile << write(_g);
+        std::cout << write(_g);
     }
+
+    outfile.close();
 }
 
 AlnGraphBoost::~AlnGraphBoost(){}
