@@ -398,7 +398,7 @@ processImportedTigs(cnsParameters  &params) {
     tig->_utgcns_verboseLevel = params.verbosity;
 
     unitigConsensus  *utgcns  = new unitigConsensus(params.seqStore, params.errorRate, params.errorRateMax, params.minOverlap);
-    bool              success = utgcns->generate(tig, params.algorithm, params.aligner, &reads, &ag);
+    bool              success = utgcns->generate(tig, params.algorithm, params.aligner, &reads);
 
     //  Show the result, if requested.
 

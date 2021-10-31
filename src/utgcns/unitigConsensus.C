@@ -1536,5 +1536,5 @@ unitigConsensus::generate(tgTig                       *tig_,
 void
 unitigConsensus::saveGraphToStream(FILE* F, char* Fname) {
   //writeToFile(std::to_string(_tig->tigID()), "unitigConsensus::saveGraphToStream::tigID", F);
-  ag->printGraph(Fname);
+  _ag->printGraph(Fname);
 }
