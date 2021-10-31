@@ -97,7 +97,7 @@ public:
                   char                         aligner_,
                   std::map<uint32, sqRead *>  *reads_ = NULL);
 /// Added by Kijin Kim
-  void   saveGraphToStream(FILE* F, char* Fname);
+  void   saveGraphToStream(char* fileName);
 
 private:
   void   switchToUncompressedCoordinates(void);
