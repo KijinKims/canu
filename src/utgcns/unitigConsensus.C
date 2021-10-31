@@ -23,6 +23,7 @@
 #include "AlnGraphBoost.H"
 #include "edlib.H"
 #include "align-parasail-driver.H"
+#include "files.H"
 
 #include <string>
 
@@ -833,7 +834,8 @@ unitigConsensus::initializeGenerate(tgTig                       *tig_,
 bool
 unitigConsensus::generatePBDAG(tgTig                       *tig_,
                                char                         aligner_,
-                               std::map<uint32, sqRead *>  *reads_) {
+                               std::map<uint32, sqRead *>  *reads_,
+                               AlnGraphBoost               *ag_) {
 
   if (initializeGenerate(tig_, reads_) == false)
     return(false);
@@ -936,6 +938,8 @@ unitigConsensus::generatePBDAG(tgTig                       *tig_,
   _tig->_quals[len] = 0;
   _tig->_basesLen   = len;
   _tig->_layoutLen  = len;
+
+  _ag = ag_;
 
   assert(len < _tig->_basesMax);
 
@@ -1498,7 +1502,8 @@ bool
 unitigConsensus::generate(tgTig                       *tig_,
                           char                         algorithm_,
                           char                         aligner_,
-                          std::map<uint32, sqRead *>  *reads_) {
+                          std::map<uint32, sqRead *>  *reads_,
+                          AlnGraphBoost               *ag_) {
   bool  success = false;
 
   if      (tig_->numberOfChildren() == 1) {
@@ -1511,7 +1516,7 @@ unitigConsensus::generate(tgTig                       *tig_,
 
   else if ((algorithm_ == 'P') ||   //  Normal utgcns.
            (algorithm_ == 'p')) {   //  'norealign'
-    success = generatePBDAG(tig_, aligner_, reads_);
+    success = generatePBDAG(tig_, aligner_, reads_, ag_);
   }
 
   if (success) {
@@ -1527,4 +1532,11 @@ unitigConsensus::generate(tgTig                       *tig_,
   }
 
   return(success);
+}
+
+/// Added by Kijin Kim
+void
+unitigConsensus::saveGraphToStream(FILE *F) {
+  writeToFile(_tig->tigID(), "unitigConsensus::saveGraphToStream::tigID", F);
+  _ag->printGraph(F);
 }

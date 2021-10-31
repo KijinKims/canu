@@ -55,6 +55,8 @@
 #define __GCON_ALNGRAPHBOOST_HPP__
 
 #include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/adjacency_list_io.hpp>
+#include "files.H"
 
 /// Alignment graph representation and consensus caller.  Based on the original
 /// Python implementation, pbdagcon.  This class is modelled after its
@@ -184,6 +186,10 @@ public:
 
     /// Locate nodes that are missing either in or out edges.
     bool danglingNodes();
+
+    /// Added by Kijin Kim
+    /// Export the graph with boost/graph/adjacency_list_io.hpp
+    void printGraph(FILE *F);
 
     /// Destructor.
     virtual ~AlnGraphBoost();

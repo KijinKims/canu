@@ -55,11 +55,15 @@
 #include <queue>
 #include <map>
 #include <vector>
+#include <iostream>
+#include <fstream>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/adjacency_list_io.hpp>
 #include <boost/utility/value_init.hpp>
 #include "Alignment.H"
 #include "AlnGraphBoost.H"
+#include "files.H"
 
 static int MAX_OFFSET = 10000;
 
@@ -530,6 +534,11 @@ bool AlnGraphBoost::danglingNodes() {
         found = true;
     }
     return found;
+}
+
+/// Added by Kijin Kim
+void AlnGraphBoost::printGraph(FILE *F) {
+    F << write( _g );
 }
 
 AlnGraphBoost::~AlnGraphBoost(){}

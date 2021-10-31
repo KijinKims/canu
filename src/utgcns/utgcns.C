@@ -43,6 +43,7 @@ public:
 
     AS_UTL_closeFile(outSeqFileA, outSeqNameA);
     AS_UTL_closeFile(outSeqFileQ, outSeqNameQ);
+    AS_UTL_closeFile(outGraphFile, outGraphName);
   };
 
   char                   *seqName = nullptr;
@@ -59,6 +60,7 @@ public:
   char                   *outLayoutsName = nullptr;
   char                   *outSeqNameA    = nullptr;
   char                   *outSeqNameQ    = nullptr;
+  char                   *outGraphName  = nullptr;
 
   char                   *exportName     = nullptr;
   char                   *importName     = nullptr;
@@ -100,6 +102,7 @@ public:
   FILE                   *outLayoutsFile = nullptr;
   FILE                   *outSeqFileA    = nullptr;
   FILE                   *outSeqFileQ    = nullptr;
+  FILE                   *outGraphFile   = nullptr;
 };
 
 
@@ -380,6 +383,7 @@ processImportedTigs(cnsParameters  &params) {
 
   tgTig                       *tig = new tgTig();
   std::map<uint32, sqRead *>   reads;
+  AlnGraphBoost               *ag;
 
   while (tig->importData(importFile, reads, importedLayouts, importedReads) == true) {
 
@@ -394,7 +398,7 @@ processImportedTigs(cnsParameters  &params) {
     tig->_utgcns_verboseLevel = params.verbosity;
 
     unitigConsensus  *utgcns  = new unitigConsensus(params.seqStore, params.errorRate, params.errorRateMax, params.minOverlap);
-    bool              success = utgcns->generate(tig, params.algorithm, params.aligner, &reads);
+    bool              success = utgcns->generate(tig, params.algorithm, params.aligner, &reads, &ag);
 
     //  Show the result, if requested.
 
@@ -411,6 +415,7 @@ processImportedTigs(cnsParameters  &params) {
     if (params.outLayoutsFile)   tig->dumpLayout(params.outLayoutsFile);
     if (params.outSeqFileA)      tig->dumpFASTA(params.outSeqFileA);
     if (params.outSeqFileQ)      tig->dumpFASTQ(params.outSeqFileQ);
+    if (params.outGraphFile)     utgcns->saveGraphToStream(params.outGraphFile);
 
     //  Tidy up for the next tig.
 
@@ -447,7 +452,6 @@ exportTigs(cnsParameters  &params) {
   fprintf(stdout, "\n");
   fprintf(stderr, "Exported %u tig%s to file '%s'.\n", nTigs, (nTigs == 1) ? "" : "s", params.exportName);
 }
-
 
 
 std::set<uint32>
@@ -624,6 +628,7 @@ processTigs(cnsParameters  &params) {
     if (params.outLayoutsFile)   tig->dumpLayout(params.outLayoutsFile);
     if (params.outSeqFileA)      tig->dumpFASTA(params.outSeqFileA);
     if (params.outSeqFileQ)      tig->dumpFASTQ(params.outSeqFileQ);
+    if (params.outGraphFile)     utgcns->saveGraphToStream(params.outGraphFile);
 
     //  Count failure.
 
@@ -707,6 +712,10 @@ main(int argc, char **argv) {
 
     else if (strcmp(argv[arg], "-Q") == 0) {
       params.outSeqNameQ = argv[++arg];
+    }
+/// Added by Kijin Kim
+    else if (strcmp(argv[arg], "-G") == 0) {
+      params.outGraphName = argv[++arg];
     }
 
     //  Partition options
@@ -864,6 +873,7 @@ main(int argc, char **argv) {
     fprintf(stderr, "    -L layouts      Write computed tigs to layout output file 'layouts'\n");
     fprintf(stderr, "    -A fasta        Write computed tigs to fasta  output file 'fasta'\n");
     fprintf(stderr, "    -Q fastq        Write computed tigs to fastq  output file 'fastq'\n");
+    fprintf(stderr, "    -G graph        Write computed DAG to graph  output file 'graph'\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "    -export name    Create a copy of the inputs needed to compute the tigs.  This\n");
     fprintf(stderr, "                    file can then be sent to the developers for debugging.  The tig(s)\n");
@@ -955,6 +965,11 @@ main(int argc, char **argv) {
   if ((params.exportName == NULL) && (params.outSeqNameQ)) {
     fprintf(stderr, "-- Opening output FASTQ file '%s'.\n", params.outSeqNameQ);
     params.outSeqFileQ    = AS_UTL_openOutputFile(params.outSeqNameQ);
+  }
+/// Added by Kijin Kim
+  if(params.outGraphName) {
+    fprintf(stderr, "-- Opening output graph file '%s'.\n", params.outGraphName);
+    params.outGraphFile    = AS_UTL_openOutputFile(params.outGraphName);
   }
 
   //

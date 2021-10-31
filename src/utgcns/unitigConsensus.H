@@ -21,6 +21,7 @@
 #include "runtime.H"
 
 #include "tgStore.H"
+#include "AlnGraphBoost.H"
 
 #include <map>
 #include <set>
@@ -94,7 +95,10 @@ public:
   bool   generate(tgTig                       *tig_,
                   char                         algorithm_,
                   char                         aligner_,
-                  std::map<uint32, sqRead *>  *reads_ = NULL);
+                  std::map<uint32, sqRead *>  *reads_ = NULL,
+                  AlnGraphBoost               *ag_);
+/// Added by Kijin Kim
+  void   saveGraphToStream(FILE *F);
 
 private:
   void   switchToUncompressedCoordinates(void);
@@ -106,9 +110,10 @@ private:
                             std::map<uint32, sqRead *>  *reads = NULL);
 
 
-  bool   generatePBDAG(tgTig                       *tig,
-                       char                         aligner,
-                       std::map<uint32, sqRead *>  *reads = NULL);
+  bool   generatePBDAG(tgTig                                *tig,
+                       char                                 aligner,
+                       std::map<uint32, sqRead *>           *reads = NULL,
+                       AlnGraphBoost                        *ag);
 
   bool   generateQuick(tgTig                       *tig,
                        std::map<uint32, sqRead *>  *reads = NULL);
@@ -136,6 +141,7 @@ private:
 
   tgTig          *_tig;
   uint32          _numReads;    //  == tig->numberOfChildren()
+  AlnGraphBoost  *_ag;
 
   uint32          _sequencesMax;
   uint32          _sequencesLen;
