@@ -415,7 +415,7 @@ processImportedTigs(cnsParameters  &params) {
     if (params.outLayoutsFile)   tig->dumpLayout(params.outLayoutsFile);
     if (params.outSeqFileA)      tig->dumpFASTA(params.outSeqFileA);
     if (params.outSeqFileQ)      tig->dumpFASTQ(params.outSeqFileQ);
-    if (params.outGraphFile)     utgcns->saveGraphToStream(params.outGraphFile);
+    if (params.outGraphFile)     utgcns->saveGraphToStream(params.outGraphFile, params.outGraphName);
 
     //  Tidy up for the next tig.
 

@@ -537,8 +537,13 @@ bool AlnGraphBoost::danglingNodes() {
 }
 
 /// Added by Kijin Kim
-void AlnGraphBoost::printGraph(FILE *F) {
-    F << write( _g );
+void AlnGraphBoost::printGraph(char* Fname) {
+
+    std::ofstream outfile (Fname);
+
+    if (outfile.is_open()) {
+        outfile << write(_g);
+    }
 }
 
 AlnGraphBoost::~AlnGraphBoost(){}
