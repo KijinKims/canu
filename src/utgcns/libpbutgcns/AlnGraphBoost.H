@@ -55,7 +55,7 @@
 #define __GCON_ALNGRAPHBOOST_HPP__
 
 #include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/adjacency_list_io.hpp>
+#include <stdint.h>
 #include "files.H"
 
 /// Alignment graph representation and consensus caller.  Based on the original
@@ -83,14 +83,18 @@ struct AlnNode {
                 ///< necessarily represented in the target.
     bool backbone; ///< Is this node based on the reference
     bool deleted; ///< mark for removed as part of the merging process
+    bool visited; ///< mark for visited as part of the printing graph process
+    uint32_t bbPos;
     graphTraits::edge_descriptor bestInEdge; ///< Best scoring in edge
     graphTraits::edge_descriptor bestOutEdge; ///< Best scoring out edge
     AlnNode() {
         base = 'N';
         coverage = 0;
         weight = 0;
+        bbPos = 0;
         backbone = false;
         deleted = false;
+        visited = false;
     }
 };
 

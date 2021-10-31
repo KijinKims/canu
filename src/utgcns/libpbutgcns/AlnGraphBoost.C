@@ -59,7 +59,6 @@
 #include <fstream>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/adjacency_list_io.hpp>
 #include <boost/utility/value_init.hpp>
 #include "Alignment.H"
 #include "AlnGraphBoost.H"
@@ -77,20 +76,24 @@ AlnGraphBoost::AlnGraphBoost(const std::string& backbone) {
         boost::add_edge(i, i+1, _g);
 
     VtxIter curr, last;
+    uint32_t bbPos = 0 ;
     boost::tie(curr, last) = boost::vertices(_g);
     _enterVtx = *curr++;
     _g[_enterVtx].base = '^';
     _g[_enterVtx].backbone = true;
+    _g[_enterVtx].bbPos = 0;
     for (size_t i = 0; i < blen; i++, ++curr) {
         VtxDesc v = *curr;
         _g[v].backbone = true;
         _g[v].weight = 0;
         _g[v].base = backbone[i];
+        _g[v].bbPos = ++bbPos;
         _bbMap[v] = v;
     }
     _exitVtx = *curr;
     _g[_exitVtx].base = '$';
     _g[_exitVtx].backbone = true;
+    _g[_exitVtx].bbPos = ++bbPos;
 }
 
 AlnGraphBoost::AlnGraphBoost(const size_t blen) {
@@ -155,6 +158,7 @@ void AlnGraphBoost::addAln(dagAlignment& aln) {
             _g[newVtx].weight++;
             _g[newVtx].backbone = false;
             _g[newVtx].deleted = false;
+            _g[newVtx].bbPos = bbPos;
             _bbMap[newVtx] = bbPos;
 
             if (prevVtx != _enterVtx || bbPos <= MAX_OFFSET || MAX_OFFSET == 0)
@@ -542,7 +546,30 @@ void AlnGraphBoost::printGraph(char* Fname) {
     std::ofstream outfile (Fname);
 
     if (outfile.is_open()) {
-        std::cout << write(_g);
+        std::queue<VtxDesc> seedNodes;
+        seedNodes.push(_enterVtx);
+
+        while(true) {
+            if (seedNodes.size() == 0)
+                break;
+
+            VtxDesc u = seedNodes.front();
+            _g[u].visited = true;
+            seedNodes.pop();
+            outfile << _g[u].bbPos << "_" << _g[u].base;
+
+            OutEdgeIter oi, oe;
+            for (boost::tie(oi, oe) = boost::out_edges(u, _g); oi != oe; ++oi) {
+                EdgeDesc e = *oi;
+                _g[e].visited = true;
+                VtxDesc v = boost::target(e, _g);
+                outfile << "\t" << _g[v].bbPos << "_" << _g[v].base << " " << _g[e].count;
+
+                if (_g[v].visited == false)
+                    seedNodes.push(v);
+            }
+            outfile << std::endl;
+        }
     }
 
     outfile.close();
