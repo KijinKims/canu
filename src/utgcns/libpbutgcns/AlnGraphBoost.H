@@ -146,9 +146,6 @@ public:
     /// \param blen length of the reference sequence.
     AlnGraphBoost(const size_t blen);
 
-    // Move constructor.
-    AlnGraphBoost(AlnGraphBoost&& other) noexcept;
-
     /// Add alignment to the graph.
     /// \param Alignment an alignment record (see Alignment.hpp)
     void addAln(dagAlignment& aln);

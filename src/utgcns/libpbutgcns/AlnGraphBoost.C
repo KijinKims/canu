@@ -120,12 +120,6 @@ AlnGraphBoost::AlnGraphBoost(const size_t blen) {
     _g[_exitVtx].backbone = true;
 }
 
-// Move constructor.
-AlnGraphBoost::AlnGraphBoost(AlnGraphBoost&& other) noexcept
-{
-    *this = std::move(other);
-}
-
 void AlnGraphBoost::addAln(dagAlignment& aln) {
     IndexMap index = boost::get(boost::vertex_index, _g);
     // tracks the position on the backbone

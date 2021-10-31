@@ -939,7 +939,7 @@ unitigConsensus::generatePBDAG(tgTig                       *tig_,
   _tig->_basesLen   = len;
   _tig->_layoutLen  = len;
 
-  _ag = ag;
+  ag_ = &ag;
 
   assert(len < _tig->_basesMax);
 
