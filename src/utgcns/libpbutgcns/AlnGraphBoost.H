@@ -193,8 +193,7 @@ public:
     bool danglingNodes();
 
     /// Added by Kijin Kim
-    /// Export the graph with boost/graph/adjacency_list_io.hpp
-    void printGraph(char* Fname);
+    void printGraph(FILE* out);
 
     /// Destructor.
     virtual ~AlnGraphBoost();

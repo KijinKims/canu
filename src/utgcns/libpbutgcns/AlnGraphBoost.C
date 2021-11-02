@@ -541,11 +541,9 @@ bool AlnGraphBoost::danglingNodes() {
 }
 
 /// Added by Kijin Kim
-void AlnGraphBoost::printGraph(char* Fname) {
+void AlnGraphBoost::printGraph(FILE* out) {
 
-    std::ofstream outfile (Fname);
-
-    if (outfile.is_open()) {
+    if (true) {
         std::queue<VtxDesc> seedNodes;
         seedNodes.push(_enterVtx);
 
@@ -554,25 +552,31 @@ void AlnGraphBoost::printGraph(char* Fname) {
                 break;
 
             VtxDesc u = seedNodes.front();
-            _g[u].visited = true;
             seedNodes.pop();
-            outfile << _g[u].bbPos << "_" << _g[u].base;
+            if (_g[u].visited == true) {
+                continue;
+            }
+            _g[u].visited = true;
+            fprintf(out, "%u_%c",
+                   _g[u].bbPos,
+                   _g[u].base);
 
             OutEdgeIter oi, oe;
             for (boost::tie(oi, oe) = boost::out_edges(u, _g); oi != oe; ++oi) {
                 EdgeDesc e = *oi;
                 _g[e].visited = true;
                 VtxDesc v = boost::target(e, _g);
-                outfile << "\t" << _g[v].bbPos << "_" << _g[v].base << " " << _g[e].count;
+                fprintf(out, "\t%u_%c %d",
+                       _g[v].bbPos,
+                       _g[v].base,
+                       _g[e].count);
 
                 if (_g[v].visited == false)
                     seedNodes.push(v);
             }
-            outfile << std::endl;
+            fprintf(out, "\n");
         }
     }
-
-    outfile.close();
 }
 
 AlnGraphBoost::~AlnGraphBoost(){}

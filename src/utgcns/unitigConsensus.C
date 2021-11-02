@@ -84,6 +84,7 @@ unitigConsensus::unitigConsensus(sqStore  *seqStore_,
 
   _tig             = NULL;
   _numReads        = 0;
+  _ag              = NULL;
 
   _sequencesMax   = 0;
   _sequencesLen   = 0;
@@ -1534,14 +1535,16 @@ unitigConsensus::generate(tgTig                       *tig_,
 
 /// Added by Kijin Kim
 void
-unitigConsensus::saveGraphToStream(char* _fileName) 
+unitigConsensus::saveGraphToStream(FILE *out) 
 {
-  FILE *F = AS_UTL_openOutputFile(_fileName);
+  
+  if (_ag == nullptr )
+      return;
 
-  uint32 _tigID = _tig->tigID();
-  writeToFile(_tigID, "unitigConsensus::saveGraphToStream::tigID", F);
+  fprintf(out, F_U32"\n",
+          _tig->tigID());
 
-  AS_UTL_closeFile(F, _fileName);
+  _ag->printGraph(out);
 
-  _ag->printGraph(_fileName);
+  delete _ag;
 }

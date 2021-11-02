@@ -80,6 +80,7 @@ sub utgcns ($$) {
     print F "  -T ../$asm.ctgStore 1 \\\n";
     print F "  -P \$jobid \\\n";
     print F "  -O ./ctgcns/\$jobid.cns.WORKING \\\n";
+    print F "  -G \$jobid.graph.output \\\n";
     print F "  -maxcoverage " . getGlobal('cnsMaxCoverage') . " \\\n";
     print F "  -e " . getGlobal("cnsErrorRate") . " \\\n";
     print F "  -quick \\\n"      if (getGlobal("cnsConsensus") eq "quick");

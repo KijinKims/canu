@@ -15,6 +15,7 @@
  *  contains full conditions and disclaimers.
  */
 
+#include <iostream>
 #include "runtime.H"
 #include "system.H"
 #include "strings.H"
@@ -43,6 +44,8 @@ public:
 
     AS_UTL_closeFile(outSeqFileA, outSeqNameA);
     AS_UTL_closeFile(outSeqFileQ, outSeqNameQ);
+
+    AS_UTL_closeFile(outGraphFile, outGraphName);
   };
 
   char                   *seqName = nullptr;
@@ -101,6 +104,7 @@ public:
   FILE                   *outLayoutsFile = nullptr;
   FILE                   *outSeqFileA    = nullptr;
   FILE                   *outSeqFileQ    = nullptr;
+  FILE                   *outGraphFile   = nullptr;
 };
 
 
@@ -381,7 +385,6 @@ processImportedTigs(cnsParameters  &params) {
 
   tgTig                       *tig = new tgTig();
   std::map<uint32, sqRead *>   reads;
-  AlnGraphBoost               *ag;
 
   while (tig->importData(importFile, reads, importedLayouts, importedReads) == true) {
 
@@ -397,12 +400,15 @@ processImportedTigs(cnsParameters  &params) {
 
     unitigConsensus  *utgcns  = new unitigConsensus(params.seqStore, params.errorRate, params.errorRateMax, params.minOverlap);
     bool              success = utgcns->generate(tig, params.algorithm, params.aligner, &reads);
+    if (success && params.outGraphName){
+        utgcns->saveGraphToStream(params.outGraphFile);
+    }
 
     //  Show the result, if requested.
 
     if (params.showResult)
       tig->display(stdout, params.seqStore, 200, 3);
-
+    
     //  Unstash.
 
     tig->unstashContains();
@@ -413,7 +419,6 @@ processImportedTigs(cnsParameters  &params) {
     if (params.outLayoutsFile)   tig->dumpLayout(params.outLayoutsFile);
     if (params.outSeqFileA)      tig->dumpFASTA(params.outSeqFileA);
     if (params.outSeqFileQ)      tig->dumpFASTQ(params.outSeqFileQ);
-    if (params.outGraphName)     utgcns->saveGraphToStream(params.outGraphName);
 
     //  Tidy up for the next tig.
 
@@ -556,7 +561,6 @@ processTigs(cnsParameters  &params) {
   //  Loop over all tigs, loading each one and processing if requested.
 
   for (uint32 ti=params.tigBgn; ti<=params.tigEnd; ti++) {
-
     if ((processList.size() > 0) &&       //  Ignore tigs not in our partition.
         (processList.count(ti) == 0))     //  (if a partition exists)
       continue;
@@ -610,7 +614,8 @@ processTigs(cnsParameters  &params) {
 
     unitigConsensus  *utgcns  = new unitigConsensus(params.seqStore, params.errorRate, params.errorRateMax, params.minOverlap);
     bool              success = utgcns->generate(tig, params.algorithm, params.aligner, params.seqReads);
-
+    if (success && params.outGraphName)
+        utgcns->saveGraphToStream(params.outGraphFile);
     //  Show the result, if requested.
 
     if (params.showResult)
@@ -626,7 +631,6 @@ processTigs(cnsParameters  &params) {
     if (params.outLayoutsFile)   tig->dumpLayout(params.outLayoutsFile);
     if (params.outSeqFileA)      tig->dumpFASTA(params.outSeqFileA);
     if (params.outSeqFileQ)      tig->dumpFASTQ(params.outSeqFileQ);
-    if (params.outGraphName)     utgcns->saveGraphToStream(params.outGraphName);
 
     //  Count failure.
 
@@ -967,6 +971,7 @@ main(int argc, char **argv) {
 /// Added by Kijin Kim
   if(params.outGraphName) {
     fprintf(stderr, "-- Opening output graph file '%s'.\n", params.outGraphName);
+    params.outGraphFile   = AS_UTL_openOutputFile(params.outGraphName);
   }
 
   //
