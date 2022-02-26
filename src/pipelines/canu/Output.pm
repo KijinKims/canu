@@ -99,6 +99,17 @@ sub generateOutputs ($) {
         }
     }
 
+    if ( fileExists("$asm.contigs.$type")) {
+        
+        $cmd = "cat ./unitigging/5-consensus/*graph.dot > ./$asm.graph.dot";
+
+        if (runCommand(".", $cmd)) {
+            caExit("failed to output graphs", "$asm.graph.err");
+        }
+
+        stashFile("$asm.graph.dot");
+    }
+
   finishStage:
     generateReport($asm);
     resetIteration("generateOutputs");
@@ -115,4 +126,6 @@ sub generateOutputs ($) {
     print STDERR "--\n";
     print STDERR "-- Read layouts saved:\n";
     print STDERR "--   Contigs       -> '$asm.contigs.layout'.\n";
+    print STDERR "-- Graphs saved:\n";
+    print STDERR "--   Graphs       -> '$asm.graph.dot'.\n";
 }

@@ -1541,10 +1541,12 @@ unitigConsensus::saveGraphToStream(FILE *out)
   if (_ag == nullptr )
       return;
 
-  fprintf(out, F_U32"\n",
+  fprintf(out, "digraph tig%08u {\n",
           _tig->tigID());
 
-  _ag->printGraph(out);
+  _ag->exportDot(out);
+
+  fprintf(out, "}\n");
 
   delete _ag;
 }

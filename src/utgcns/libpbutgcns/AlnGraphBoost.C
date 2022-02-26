@@ -352,7 +352,7 @@ void AlnGraphBoost::reapNodes() {
 
 const std::string AlnGraphBoost::consensus(int minWeight) {
     // get the best scoring path
-    std::vector<AlnNode> path = bestPath();
+    std::vector<VtxDesc> path = bestPath();
 
     // consensus sequence
     std::string cns;
@@ -360,9 +360,13 @@ const std::string AlnGraphBoost::consensus(int minWeight) {
     // track the longest consensus path meeting minimum weight
     int offs = 0, bestOffs = 0, length = 0, idx = 0;
     bool metWeight = false;
-    std::vector<AlnNode>::iterator curr = path.begin();
+
+    std::vector<VtxDesc>::iterator curr = path.begin();
+    VtxDesc curr_cns_start;
+    VtxDesc cns_start_cand;
+    VtxDesc cns_end_cand;
     for (; curr != path.end(); ++curr) {
-        AlnNode n = *curr;
+        AlnNode n = _g[*curr];
         if (n.base == _g[_enterVtx].base || n.base == _g[_exitVtx].base)
             continue;
 
@@ -371,11 +375,14 @@ const std::string AlnGraphBoost::consensus(int minWeight) {
         // initial beginning of minimum weight section
         if (!metWeight && n.weight >= minWeight) {
             offs = idx;
+            curr_cns_start = *curr;
             metWeight = true;
         } else if (metWeight && n.weight < minWeight) {
         // concluded minimum weight section, update if longest seen so far
             if ((idx - offs) > length) {
                 bestOffs = offs;
+                cns_start_cand = curr_cns_start;
+                cns_end_cand = *(curr - 1);
                 length = idx - offs;
             }
             metWeight = false;
@@ -387,7 +394,35 @@ const std::string AlnGraphBoost::consensus(int minWeight) {
     if (metWeight && (idx - offs) > length) {
         bestOffs = offs;
         length = idx - offs;
+        cns_start_cand = curr_cns_start;
+        cns_end_cand = *(curr - 1);
     }
+    _g[cns_start_cand].cnsStart = true;
+    _g[cns_end_cand].cnsEnd = true;
+
+    // mark consensus nodes
+    curr = path.begin();
+    bool on_best_path = false;
+
+    uint32_t path_idx = 0;
+
+    for (; curr != path.end(); ++curr) {
+
+        if (*curr == cns_start_cand) {
+            on_best_path = true;
+        }
+
+        if (on_best_path) {
+            _g[*curr].cns = true;
+            _g[*curr].cnsPos = path_idx++;
+        }
+
+        if (*curr == cns_end_cand) {
+            break;
+        }
+    }
+
+    _g[cns_end_cand].cns = true;
 
     return cns.substr(bestOffs, length);
 }
@@ -396,7 +431,7 @@ void AlnGraphBoost::consensus(std::vector<CnsResult>& seqs, int minWeight, size_
     seqs.clear();
 
     // get the best scoring path
-    std::vector<AlnNode> path = bestPath();
+    std::vector<VtxDesc> path = bestPath();
 
     // consensus sequence
     std::string cns;
@@ -404,9 +439,12 @@ void AlnGraphBoost::consensus(std::vector<CnsResult>& seqs, int minWeight, size_
     // track the longest consensus path meeting minimum weight
     int offs = 0, idx = 0;
     bool metWeight = false;
-    std::vector<AlnNode>::iterator curr = path.begin();
+    std::vector<VtxDesc>::iterator curr = path.begin();
+    VtxDesc curr_cns_start;
+    VtxDesc cns_start_cand;
+    VtxDesc cns_end_cand;    
     for (; curr != path.end(); ++curr) {
-        AlnNode n = *curr;
+        AlnNode n = _g[*curr];
         if (n.base == _g[_enterVtx].base || n.base == _g[_exitVtx].base)
             continue;
 
@@ -415,11 +453,14 @@ void AlnGraphBoost::consensus(std::vector<CnsResult>& seqs, int minWeight, size_
         // initial beginning of minimum weight section
         if (!metWeight && n.weight >= minWeight) {
             offs = idx;
+            curr_cns_start = *curr;
             metWeight = true;
         } else if (metWeight && n.weight < minWeight) {
         // concluded minimum weight section, add sequence to supplied vector
             metWeight = false;
             CnsResult result;
+            cns_start_cand = curr_cns_start;
+            cns_end_cand = *(curr - 1);
             result.range[0] = offs;
             result.range[1] = idx;
             size_t length = idx - offs;
@@ -433,14 +474,43 @@ void AlnGraphBoost::consensus(std::vector<CnsResult>& seqs, int minWeight, size_
     if (metWeight) {
         size_t length = idx - offs;
         CnsResult result;
+        cns_start_cand = curr_cns_start;
+        cns_end_cand = *(curr - 1);
         result.range[0] = offs;
         result.range[1] = idx;
         result.seq = cns.substr(offs, length);
         if (length >= minLen) seqs.push_back(result);
     }
+
+    _g[cns_start_cand].cnsStart = true;
+    _g[cns_end_cand].cnsEnd = true;
+
+    // mark consensus nodes
+    curr = path.begin();
+    bool on_best_path = false;
+
+    uint32_t path_idx = 0;
+
+    for (; curr != path.end(); ++curr) {
+
+        if (*curr == cns_start_cand) {
+            on_best_path = true;
+        }
+
+        if (on_best_path) {
+            _g[*curr].cns = true;
+            _g[*curr].cnsPos = path_idx++;
+        }
+
+        if (*curr == cns_end_cand) {
+            break;
+        }
+    }
+
+    _g[cns_end_cand].cns = true;
 }
 
-const std::vector<AlnNode> AlnGraphBoost::bestPath() {
+const std::vector<VtxDesc> AlnGraphBoost::bestPath() {
     EdgeIter ei, ee;
     for (boost::tie(ei, ee) = edges(_g); ei != ee; ++ei)
         _g[*ei].visited = false;
@@ -504,9 +574,9 @@ const std::vector<AlnNode> AlnGraphBoost::bestPath() {
 
     // construct the final best path
     VtxDesc prev = _enterVtx, next;
-    std::vector<AlnNode> bpath;
+    std::vector<VtxDesc> bpath;
     while (true) {
-        bpath.push_back(_g[prev]);
+        bpath.push_back(prev);
         if (bestNodeScoreEdge.count(prev) == 0) {
             break;
         } else {
@@ -543,38 +613,130 @@ bool AlnGraphBoost::danglingNodes() {
 /// Added by Kijin Kim
 void AlnGraphBoost::printGraph(FILE* out) {
 
-    if (true) {
-        std::queue<VtxDesc> seedNodes;
-        seedNodes.push(_enterVtx);
+    std::queue<VtxDesc> seedNodes;
+    seedNodes.push(_enterVtx);
 
-        while(true) {
-            if (seedNodes.size() == 0)
-                break;
+    while(true) {
+        if (seedNodes.size() == 0)
+            break;
 
-            VtxDesc u = seedNodes.front();
-            seedNodes.pop();
-            if (_g[u].visited == true) {
-                continue;
-            }
-            _g[u].visited = true;
-            fprintf(out, "%u_%c",
-                   _g[u].bbPos,
-                   _g[u].base);
+        VtxDesc u = seedNodes.front();
+        seedNodes.pop();
+        if (_g[u].visited == true) {
+            continue;
+        }
+        _g[u].visited = true;
+        fprintf(out, "%u_%c",
+                _g[u].bbPos,
+                _g[u].base);
 
-            OutEdgeIter oi, oe;
-            for (boost::tie(oi, oe) = boost::out_edges(u, _g); oi != oe; ++oi) {
-                EdgeDesc e = *oi;
-                _g[e].visited = true;
-                VtxDesc v = boost::target(e, _g);
-                fprintf(out, "\t%u_%c %d",
-                       _g[v].bbPos,
-                       _g[v].base,
-                       _g[e].count);
+        if (_g[u].cnsStart == true) {
+            fprintf(out, "_start");
+        }
+        else if (_g[u].cnsEnd == true) {
+            fprintf(out, "_end");
+        }
 
-                if (_g[v].visited == false)
-                    seedNodes.push(v);
-            }
-            fprintf(out, "\n");
+        OutEdgeIter oi, oe;
+        for (boost::tie(oi, oe) = boost::out_edges(u, _g); oi != oe; ++oi) {
+            EdgeDesc e = *oi;
+            VtxDesc v = boost::target(e, _g);
+            fprintf(out, "\t%u_%c %d",
+                    _g[v].bbPos,
+                    _g[v].base,
+                    _g[e].count);
+
+            if (_g[v].visited == false)
+                seedNodes.push(v);
+        }
+        fprintf(out, "\n");
+    }
+}
+
+void AlnGraphBoost::exportDot(FILE* out) {
+
+    std::queue<VtxDesc> seedNodes;
+    seedNodes.push(_enterVtx);
+
+    int i = 0;
+    while(true) {
+        if (seedNodes.size() == 0)
+            break;
+
+        VtxDesc u = seedNodes.front();
+        seedNodes.pop();
+        if (_g[u].visited) {
+            continue;
+        }
+        _g[u].visited = true;
+        _g[u].id = ++i;
+
+        OutEdgeIter oi, oe;
+        for (boost::tie(oi, oe) = boost::out_edges(u, _g); oi != oe; ++oi) {
+            EdgeDesc e = *oi;
+            _g[e].visited = true;
+            VtxDesc v = boost::target(e, _g);
+
+            if (!_g[v].visited)
+                seedNodes.push(v);
+        }
+    }
+
+    std::queue<VtxDesc> seedNodes2;
+    seedNodes2.push(_enterVtx);
+
+    while(true) {
+        if (seedNodes2.size() == 0)
+            break;
+
+        VtxDesc u = seedNodes2.front();
+        seedNodes2.pop();
+        if (_g[u].visited2) {
+            continue;
+        }
+        _g[u].visited2 = true;
+
+        fprintf(out, "\t%d [cov=%d, base=\"%c\", bb_pos=%u, cns_pos=%u",
+                _g[u].id,
+                _g[u].coverage,
+                _g[u].base,
+                _g[u].bbPos,
+                _g[u].cnsPos);
+
+        if (_g[u].cns) {
+            fprintf(out, ", initial_consensus=true");
+        }
+        else {
+            fprintf(out, ", initial_consensus=false");
+        }
+
+        if (_g[u].cnsStart) {
+            fprintf(out, ", initial_consensus_start=true");
+        }
+        else{
+            fprintf(out, ", initial_consensus_start=false");
+        }
+
+        if (_g[u].cnsEnd) {
+            fprintf(out, ", initial_consensus_end=true");
+        }
+        else {
+            fprintf(out, ", initial_consensus_end=false");
+        }
+
+        fprintf(out, "]\n");
+
+        OutEdgeIter oi, oe;
+        for (boost::tie(oi, oe) = boost::out_edges(u, _g); oi != oe; ++oi) {
+            EdgeDesc e = *oi;
+            VtxDesc v = boost::target(e, _g);
+            fprintf(out, "\t%d -> %d [weight=%d]\n",
+                    _g[u].id,
+                    _g[v].id,
+                    _g[e].count);
+
+            if (!_g[v].visited2)
+                seedNodes2.push(v);
         }
     }
 }

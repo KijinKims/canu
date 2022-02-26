@@ -55,6 +55,7 @@
 #define __GCON_ALNGRAPHBOOST_HPP__
 
 #include <boost/graph/adjacency_list.hpp>
+#include <boost/format.hpp>
 #include <stdint.h>
 #include "Alignment.H"
 #include "files.H"
@@ -77,6 +78,7 @@ typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS> g
 /// Graph vertex property. An alignment node, which represents one base position
 /// in the alignment graph.
 struct AlnNode {
+    int id; ///id to discriminate during the printing graph process
     char base; ///< DNA base: [ACTG]
     int coverage; ///< Number of reads align to this position, but not
                   ///< necessarily match
@@ -85,7 +87,12 @@ struct AlnNode {
     bool backbone; ///< Is this node based on the reference
     bool deleted; ///< mark for removed as part of the merging process
     bool visited; ///< mark for visited as part of the printing graph process
+    bool visited2; ///< mark for visited2 as part of the printing graph process
+    bool cnsStart;
+    bool cnsEnd;
+    bool cns;
     uint32_t bbPos;
+    uint32_t cnsPos;
     graphTraits::edge_descriptor bestInEdge; ///< Best scoring in edge
     graphTraits::edge_descriptor bestOutEdge; ///< Best scoring out edge
     AlnNode() {
@@ -93,9 +100,14 @@ struct AlnNode {
         coverage = 0;
         weight = 0;
         bbPos = 0;
+        cnsPos = 0;
         backbone = false;
         deleted = false;
         visited = false;
+        visited2 = false;
+        cnsStart = false;
+        cnsEnd = false;
+        cns = false;
     }
 };
 
@@ -105,7 +117,6 @@ struct AlnEdge {
     bool visited; ///< Tracks a visit during algorithm processing
     AlnEdge() {
         count = 0;
-        visited = false;
     }
 };
 
@@ -187,13 +198,15 @@ public:
     void consensus(std::vector<CnsResult>& seqs, int minWeight=0, size_t minLength=500);
 
     /// Locates the optimal path through the graph.  Called by consensus()
-    const std::vector<AlnNode> bestPath();
+    const std::vector<VtxDesc> bestPath();
 
     /// Locate nodes that are missing either in or out edges.
     bool danglingNodes();
 
     /// Added by Kijin Kim
     void printGraph(FILE* out);
+
+    void exportDot(FILE* out);
 
     /// Destructor.
     virtual ~AlnGraphBoost();
