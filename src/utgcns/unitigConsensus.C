@@ -1541,7 +1541,7 @@ unitigConsensus::saveGraphToStream(FILE *out)
   if (_ag == nullptr )
       return;
 
-  fprintf(out, "digraph tig%08u {\n",
+  fprintf(out, "strict digraph tig%08u {\n",
           _tig->tigID());
 
   _ag->exportDot(out);
