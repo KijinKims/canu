@@ -1541,12 +1541,14 @@ unitigConsensus::saveGraphToStream(FILE *out)
   if (_ag == nullptr )
       return;
 
-  fprintf(out, "strict digraph tig%08u {\n",
+  fprintf(out, "  <graph id=\"tig%08u\" edgedefault=\"directed\">\n",
+          _tig->tigID());
+  fprintf(out, "    <data key=\"d6\">tig%08u</data>\n",
           _tig->tigID());
 
-  _ag->exportDot(out);
+  _ag->exportGraphML(out);
 
-  fprintf(out, "}\n");
+  fprintf(out, "  </graph>\n");
 
   delete _ag;
 }

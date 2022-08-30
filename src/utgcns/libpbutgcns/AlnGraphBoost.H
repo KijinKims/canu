@@ -207,6 +207,7 @@ public:
     void printGraph(FILE* out);
 
     void exportDot(FILE* out);
+    void exportGraphML(FILE* out);
 
     /// Destructor.
     virtual ~AlnGraphBoost();

@@ -696,11 +696,10 @@ void AlnGraphBoost::exportDot(FILE* out) {
         }
         _g[u].visited2 = true;
 
-        fprintf(out, "\t%d [cov=%d, base=\"%c\", bb_pos=%u, cns_pos=%u",
+        fprintf(out, "\t%d [cov=%d, base=\"%c\", cns_pos=%u",
                 _g[u].id,
                 _g[u].coverage,
                 _g[u].base,
-                _g[u].bbPos,
                 _g[u].cnsPos);
 
         if (_g[u].cns) {
@@ -734,6 +733,103 @@ void AlnGraphBoost::exportDot(FILE* out) {
                     _g[u].id,
                     _g[v].id,
                     _g[e].count);
+
+            if (!_g[v].visited2)
+                seedNodes2.push(v);
+        }
+    }
+}
+
+void AlnGraphBoost::exportGraphML(FILE* out) {
+
+    std::queue<VtxDesc> seedNodes;
+    seedNodes.push(_enterVtx);
+
+    int i = 0;
+    while(true) {
+        if (seedNodes.size() == 0)
+            break;
+
+        VtxDesc u = seedNodes.front();
+        seedNodes.pop();
+        if (_g[u].visited) {
+            continue;
+        }
+        _g[u].visited = true;
+        _g[u].id = ++i;
+
+        OutEdgeIter oi, oe;
+        for (boost::tie(oi, oe) = boost::out_edges(u, _g); oi != oe; ++oi) {
+            EdgeDesc e = *oi;
+            _g[e].visited = true;
+            VtxDesc v = boost::target(e, _g);
+
+            if (!_g[v].visited)
+                seedNodes.push(v);
+        }
+    }
+
+    std::queue<VtxDesc> seedNodes2;
+    seedNodes2.push(_enterVtx);
+    i = 0;
+
+    while(true) {
+        if (seedNodes2.size() == 0)
+            break;
+
+        VtxDesc u = seedNodes2.front();
+        seedNodes2.pop();
+        if (_g[u].visited2) {
+            continue;
+        }
+        _g[u].visited2 = true;
+
+        fprintf(out, "    <node id=\"n%d\">\n",
+                _g[u].id);
+
+        fprintf(out, "      <data key=\"d0\">%d</data>\n",
+                _g[u].coverage);
+
+        fprintf(out, "      <data key=\"d1\">%c</data>\n",
+                _g[u].base);
+
+        if (_g[u].cns) {
+            fprintf(out, "      <data key=\"d2\">true</data>\n");
+        }
+        else {
+            fprintf(out, "      <data key=\"d2\">false</data>\n");
+        }
+
+        if (_g[u].cnsStart) {
+            fprintf(out, "      <data key=\"d3\">true</data>\n");
+        }
+        else{
+            fprintf(out, "      <data key=\"d3\">false</data>\n");
+        }
+
+        if (_g[u].cnsEnd) {
+            fprintf(out, "      <data key=\"d4\">true</data>\n");
+        }
+        else {
+            fprintf(out, "      <data key=\"d4\">false</data>\n");
+        }
+
+        fprintf(out, "    </node>\n");
+
+        OutEdgeIter oi, oe;
+        for (boost::tie(oi, oe) = boost::out_edges(u, _g); oi != oe; ++oi) {
+            EdgeDesc e = *oi;
+            VtxDesc v = boost::target(e, _g);
+            i++;
+            fprintf(out, "    <edge id=\"e%d\" ", i);
+            fprintf(out, "source=\"n%d\" target=\"n%d\">\n",
+                _g[u].id,
+                _g[v].id);
+
+            fprintf(out, "      <data key=\"d5\">%d</data>\n",
+                _g[e].count);
+            
+            fprintf(out, "    </edge>\n");
 
             if (!_g[v].visited2)
                 seedNodes2.push(v);

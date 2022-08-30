@@ -373,6 +373,24 @@ printHeader(cnsParameters  &params) {
   fprintf(stdout, "------- --------- -------  -------- -------- -------- --------  -------- --------\n");
 }
 
+void
+printGraphMLHeader(FILE *out)  {
+  fprintf(out, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+  fprintf(out, "<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\">\n");
+  fprintf(out, "  <key id=\"d0\" for=\"node\" attr.name=\"coverage\" attr.type=\"int\"/>\n");
+  fprintf(out, "  <key id=\"d1\" for=\"node\" attr.name=\"base\" attr.type=\"string\"/>\n");
+  fprintf(out, "  <key id=\"d2\" for=\"node\" attr.name=\"initial_consensus\" attr.type=\"boolean\"/>\n");
+  fprintf(out, "  <key id=\"d3\" for=\"node\" attr.name=\"initial_start\" attr.type=\"boolean\"/>\n");
+  fprintf(out, "  <key id=\"d4\" for=\"node\" attr.name=\"initial_end\" attr.type=\"boolean\"/>\n");
+  fprintf(out, "  <key id=\"d5\" for=\"edge\" attr.name=\"weight\" attr.type=\"int\"/>\n");
+  fprintf(out, "  <key id=\"d6\" for=\"graph\" attr.name=\"id\" attr.type=\"string\"/>\n");
+}
+
+void
+printGraphMLFooter(FILE *out) {
+  fprintf(out, "</graphml>\n");
+}
+
 
 void
 processImportedTigs(cnsParameters  &params) {
@@ -400,7 +418,8 @@ processImportedTigs(cnsParameters  &params) {
 
     unitigConsensus  *utgcns  = new unitigConsensus(params.seqStore, params.errorRate, params.errorRateMax, params.minOverlap);
     bool              success = utgcns->generate(tig, params.algorithm, params.aligner, &reads);
-    if (success && params.outGraphName){
+    if (params.outGraphName){
+        printGraphMLHeader(params.outGraphFile);
         utgcns->saveGraphToStream(params.outGraphFile);
     }
 
@@ -419,6 +438,7 @@ processImportedTigs(cnsParameters  &params) {
     if (params.outLayoutsFile)   tig->dumpLayout(params.outLayoutsFile);
     if (params.outSeqFileA)      tig->dumpFASTA(params.outSeqFileA);
     if (params.outSeqFileQ)      tig->dumpFASTQ(params.outSeqFileQ);
+    if (params.outGraphName) printGraphMLFooter(params.outGraphFile);
 
     //  Tidy up for the next tig.
 
@@ -614,8 +634,10 @@ processTigs(cnsParameters  &params) {
 
     unitigConsensus  *utgcns  = new unitigConsensus(params.seqStore, params.errorRate, params.errorRateMax, params.minOverlap);
     bool              success = utgcns->generate(tig, params.algorithm, params.aligner, params.seqReads);
-    if (success && params.outGraphName)
-        utgcns->saveGraphToStream(params.outGraphFile);
+    if (success && params.outGraphName){
+      printGraphMLHeader(params.outGraphFile);
+      utgcns->saveGraphToStream(params.outGraphFile);
+    }
     //  Show the result, if requested.
 
     if (params.showResult)
@@ -631,6 +653,7 @@ processTigs(cnsParameters  &params) {
     if (params.outLayoutsFile)   tig->dumpLayout(params.outLayoutsFile);
     if (params.outSeqFileA)      tig->dumpFASTA(params.outSeqFileA);
     if (params.outSeqFileQ)      tig->dumpFASTQ(params.outSeqFileQ);
+    if (params.outGraphName) printGraphMLFooter(params.outGraphFile);
 
     //  Count failure.
 
